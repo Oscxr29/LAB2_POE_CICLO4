@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Gestor de tareas · LAB2 POE</title>
+  </head>
+  <body>
+    <main class="app">
+      <header class="cabecera">
+        <h1>Gestor de tareas</h1>
+        <p id="contador" class="contador" aria-live="polite"></p>
+      </header>
+
+      <form id="form-tarea" class="nueva" autocomplete="off">
+        <input id="input-titulo" type="text" placeholder="¿Qué hay que hacer?" maxlength="120" required aria-label="Título de la tarea" aria-describedby="error-titulo" />
+        <select id="select-prioridad" aria-label="Prioridad">
+          <option value="alta">Alta</option>
+          <option value="media" selected>Media</option>
+          <option value="baja">Baja</option>
+        </select>
+        <button type="submit">Agregar</button>
+        <p id="error-titulo" class="error" role="alert" hidden></p>
+      </form>
+
+      <section class="filtros" aria-label="Filtros y orden">
+        <label>
+          Prioridad
+          <select id="filtro-prioridad">
+            <option value="todas">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+          </select>
+        </label>
+        <label>
+          Estado
+          <select id="filtro-estado">
+            <option value="todas">Todas</option>
+            <option value="pendientes">Pendientes</option>
+            <option value="completadas">Completadas</option>
+          </select>
+        </label>
+        <label>
+          Ordenar por
+          <select id="select-orden">
+            <option value="prioridad">Prioridad</option>
+            <option value="fecha">Más recientes</option>
+          </select>
+        </label>
+      </section>
+
+      <ul id="lista-tareas" class="lista"></ul>
+      <p id="estado-vacio" class="vacio" hidden>No hay tareas que coincidan con los filtros.</p>
+    </main>
+
+    <dialog id="dialogo-confirmar" class="dialogo" aria-labelledby="dialogo-titulo">
+      <form method="dialog">
+        <h2 id="dialogo-titulo">¿Eliminar tarea?</h2>
+        <p id="dialogo-texto"></p>
+        <div class="dialogo-acciones">
+          <button value="cancelar" class="secundario">Cancelar</button>
+          <button value="confirmar" class="peligro">Eliminar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
