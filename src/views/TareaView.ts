@@ -40,6 +40,7 @@ function obtener<T extends HTMLElement>(id: string): T {
   return el as T;
 }
 
+// Devuelve la fecha local en el formato que utiliza el campo date.
 function fechaDeHoy(): string {
   const ahora = new Date();
   const mes = String(ahora.getMonth() + 1).padStart(2, '0');
@@ -47,7 +48,7 @@ function fechaDeHoy(): string {
   return `${ahora.getFullYear()}-${mes}-${dia}`;
 }
 
-export class TareaView {
+export class TareaView { // La vista no sabe nada de tareas, solo de HTML y eventos. Por que eso no importa que el nombre de la clase sea TareaView, ya que es una vista de tareas.
   private readonly formulario = obtener<HTMLFormElement>('form-tarea');
   private readonly inputTitulo = obtener<HTMLInputElement>('input-titulo');
   private readonly errorTitulo = obtener<HTMLParagraphElement>('error-titulo');
@@ -70,6 +71,7 @@ export class TareaView {
   private idEditando: string | null = null;
   private tareasActuales: readonly Tarea[] = [];
 
+  // Registra los eventos del formulario, filtros y lista mediante callbacks.
   enlazar(manejadores: ManejadoresVista): void {
     this.inputFechaLimite.value = fechaDeHoy();
 
@@ -118,6 +120,7 @@ export class TareaView {
     });
   }
 
+  // Redibuja la lista y actualiza los contadores conservando el foco útil.
   render(tareas: readonly Tarea[], resumen: Resumen): void {
     this.tareasActuales = tareas;
     const activo = document.activeElement;
@@ -132,6 +135,7 @@ export class TareaView {
     if (idEnfocado) this.lista.querySelector<HTMLInputElement>(`li[data-id="${idEnfocado}"] input[type="checkbox"]`)?.focus();
   }
 
+  // Muestra un error asociado al formulario y devuelve el foco al título.
   mostrarError(mensaje: string): void {
     this.errorTitulo.textContent = mensaje;
     this.errorTitulo.hidden = false;
@@ -139,12 +143,14 @@ export class TareaView {
     this.inputTitulo.focus();
   }
 
+  // Oculta el mensaje de validación cuando el formulario vuelve a ser válido.
   private limpiarError(): void {
     this.errorTitulo.hidden = true;
     this.errorTitulo.textContent = '';
     this.inputTitulo.removeAttribute('aria-invalid');
   }
 
+  // Carga una tarea en el formulario y activa el modo de actualización.
   private iniciarEdicion(id: string): void {
     const tarea = this.tareasActuales.find((actual) => actual.id === id);
     if (!tarea) return;
@@ -158,6 +164,7 @@ export class TareaView {
     this.inputTitulo.focus();
   }
 
+  // Restablece el formulario y elimina el identificador temporal de edición.
   private cancelarEdicion(): void {
     this.idEditando = null;
     this.formulario.reset();
@@ -168,6 +175,7 @@ export class TareaView {
     this.inputTitulo.focus();
   }
 
+  // Resuelve si el usuario confirmó la eliminación mediante el diálogo nativo.
   confirmarEliminacion(titulo: string): Promise<boolean> {
     this.textoDialogo.textContent = `«${titulo}» se eliminará de forma permanente.`;
     this.dialogo.returnValue = '';
@@ -177,6 +185,7 @@ export class TareaView {
     });
   }
 
+  // Construye una fila segura de la lista a partir de una tarea del modelo.
   private crearItem(tarea: Tarea): HTMLLIElement {
     const li = document.createElement('li');
     li.className = 'tarea';

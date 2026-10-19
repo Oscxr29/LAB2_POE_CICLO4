@@ -2,16 +2,18 @@
 // guarda y recupera listas de T. Si mañana el proyecto guarda notas o
 // usuarios, esta clase se reutiliza sin tocarla.
 
-export class StorageService<T> {
+export class StorageService<T> { 
   private readonly clave: string;
   private readonly validar: (dato: unknown) => dato is T;
 
   // La clave lleva una versión para no mezclar datos viejos con un esquema nuevo.
+  // El validador evita convertir datos corruptos en objetos de la aplicación.
   constructor(clave: string, validar: (dato: unknown) => dato is T) {
     this.clave = clave;
     this.validar = validar;
   }
 
+  // Recupera y valida la colección guardada; si no existe, inicia vacía.
   cargar(): T[] {
     try {
       const crudo = localStorage.getItem(this.clave);
@@ -26,6 +28,7 @@ export class StorageService<T> {
     }
   }
 
+  // Serializa la colección actual y la escribe bajo la clave configurada.
   guardar(items: readonly T[]): void {
     try {
       localStorage.setItem(this.clave, JSON.stringify(items));

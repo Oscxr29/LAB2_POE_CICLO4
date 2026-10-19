@@ -28,14 +28,17 @@ export interface TareaDTO {
   fecha: string;
 }
 
+// Confirma que un valor externo pertenece al conjunto permitido de prioridades.
 export function esPrioridad(valor: unknown): valor is Prioridad {
   return typeof valor === 'string' && (PRIORIDADES as readonly string[]).includes(valor);
 }
 
+// Confirma que una categoría leída del formulario o del almacenamiento es válida.
 export function esCategoria(valor: unknown): valor is Categoria {
   return typeof valor === 'string' && (CATEGORIAS as readonly string[]).includes(valor);
 }
 
+// Protege el modelo antes de aceptar datos provenientes de localStorage.
 export function esTareaDTO(valor: unknown): valor is TareaDTO {
   if (typeof valor !== 'object' || valor === null) return false;
   const v = valor as Record<string, unknown>;
@@ -73,6 +76,7 @@ export class Tarea {
   readonly completada: boolean;
   readonly fecha: Date;
 
+  // Recibe todos los datos necesarios para construir una tarea completa.
   constructor(datos: DatosTarea) {
     this.id = datos.id;
     this.titulo = datos.titulo;
@@ -83,9 +87,10 @@ export class Tarea {
     this.fecha = datos.fecha;
   }
 
+  // Crea una tarea nueva con identificador y fecha de creación propios.
   static crear(titulo: string, prioridad: Prioridad, categoria: Categoria, fechaLimite: string): Tarea {
     return new Tarea({
-      id: crypto.randomUUID(),
+      id: crypto.randomUUID(), // Genera un identificador único para la tarea.
       titulo: titulo.trim(),
       prioridad,
       categoria,
@@ -95,6 +100,7 @@ export class Tarea {
     });
   }
 
+  // Reconstruye una tarea desde el formato plano guardado como JSON.
   static desdeDTO(dto: TareaDTO): Tarea {
     return new Tarea({ ...dto, fecha: new Date(dto.fecha) });
   }
@@ -104,14 +110,17 @@ export class Tarea {
     return new Tarea({ ...this.aDatos(), titulo: titulo.trim(), prioridad, categoria, fechaLimite });
   }
 
+  // Cambia el estado devolviendo otra instancia, sin mutar la tarea original.
   alternarEstado(): Tarea {
     return new Tarea({ ...this.aDatos(), completada: !this.completada });
   }
 
+  // Convierte la entidad a un formato serializable para localStorage.
   aDTO(): TareaDTO {
     return { ...this.aDatos(), fecha: this.fecha.toISOString() };
   }
 
+  // Reúne los datos internos compartidos por las operaciones inmutables.
   private aDatos(): DatosTarea {
     return {
       id: this.id,

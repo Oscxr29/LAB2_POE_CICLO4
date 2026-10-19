@@ -25,6 +25,7 @@ export class TareaController {
   private readonly vista: TareaView;
   private readonly almacen: StorageService<TareaDTO>;
 
+  // Carga el estado inicial y conecta los eventos de la vista con las reglas.
   constructor(vista: TareaView, almacen: StorageService<TareaDTO>) {
     this.vista = vista;
     this.almacen = almacen;
@@ -60,6 +61,7 @@ export class TareaController {
     this.refrescar();
   }
 
+  // Centraliza el alta y la edición para aplicar las mismas validaciones.
   private guardar(
     titulo: string,
     prioridad: Prioridad,
@@ -89,12 +91,14 @@ export class TareaController {
     return true;
   }
 
+  // Sustituye la tarea marcada por una copia con el estado contrario.
   private alternar(id: string): void {
     // map crea un arreglo nuevo y solo reemplaza la tarea tocada (Tarea es inmutable).
     this.tareas = this.tareas.map((t) => (t.id === id ? t.alternarEstado() : t));
     this.persistirYRefrescar();
   }
 
+  // Pide confirmación antes de retirar una tarea del estado y del almacenamiento.
   private async eliminar(id: string): Promise<void> {
     const tarea = this.tareas.find((t) => t.id === id);
     if (!tarea) return;
@@ -106,6 +110,7 @@ export class TareaController {
     this.persistirYRefrescar();
   }
 
+  // Obtiene una vista filtrada y ordenada sin alterar la colección principal.
   private obtenerVisibles(): Tarea[] {
     // Los filtros se combinan para mostrar únicamente las tareas que cumplen todos los criterios activos.
     const visibles = this.tareas.filter((t) => {
@@ -128,11 +133,13 @@ export class TareaController {
     });
   }
 
+  // Persiste el estado actual y solicita una nueva representación de la vista.
   private persistirYRefrescar(): void {
     this.almacen.guardar(this.tareas.map((t) => t.aDTO()));
     this.refrescar();
   }
 
+  // Calcula el resumen que la interfaz muestra junto con las tareas visibles.
   private refrescar(): void {
     this.vista.render(this.obtenerVisibles(), {
       total: this.tareas.length,
