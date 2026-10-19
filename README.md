@@ -1,107 +1,111 @@
-# Gestor de tareas por prioridad
+# Gestor de Tareas MVC - Parcial 2
 
-Laboratorio #2, Programación Orientada a Objetos (Proyecto 4).
+Evaluación Parcial 2, Programación Orientada a Eventos.
+Continuidad y actualización del proyecto base (Laboratorio #2).
 
-Aplicación web hecha con TypeScript y Vite, sin frameworks, que organiza tareas por prioridad (alta, media, baja). Sigue el patrón MVC y guarda los datos en `localStorage`, así que sobrevive a recargar la página. No necesita servidor ni base de datos.
+Aplicación web desarrollada con TypeScript y Vite, sin frameworks. Implementa una arquitectura estricta **MVC (Modelo-Vista-Controlador)**, con separación de responsabilidades, tareas inmutables y persistencia en `localStorage`.
 
-## Funcionalidades
+## Nuevas funcionalidades del Parcial 2
 
-- Registrar tareas con título y prioridad.
-- Ordenar por prioridad o por fecha (más recientes primero).
-- Filtrar por prioridad y por estado (pendientes o completadas), de forma combinada.
-- Marcar y desmarcar tareas como completadas.
-- Eliminar una tarea después de confirmarlo en un diálogo.
-- Guardar todo en `localStorage`.
-- Tema claro u oscuro según la preferencia del sistema.
+- **Campos extendidos:** cada tarea incluye categoría (`estudio`, `trabajo` o `personal`) y fecha límite.
+- **Modo edición inmutable:** permite cargar una tarea en el formulario y actualizarla mediante una nueva instancia, sin modificar el objeto original.
+- **Validación de títulos duplicados:** impide registrar o editar tareas con títulos iguales, ignorando mayúsculas y minúsculas.
+- **Filtros combinados:** búsqueda por texto y filtros de prioridad, estado y categoría que se aplican simultáneamente.
+- **Orden alfabético:** permite ordenar las tareas por título de A a Z.
+- **Tareas vencidas:** las tareas pendientes cuya fecha límite ya pasó se muestran en rojo y con el aviso `⚠️ VENCIDA`.
+- **Contadores por prioridad:** el encabezado muestra las cantidades de tareas de prioridad alta, media y baja.
+- **Persistencia aislada:** el nuevo esquema utiliza la clave `lab2-poe:tareas:v2` para no mezclar datos anteriores.
 
-## Requisitos y dependencias
+## Capturas de pantalla
 
-| Qué | Detalle |
+
+![Pantalla principal con filtros y contadores](./public/captura-principal.png)
+
+*Vista principal con el formulario, los filtros combinados y los contadores por prioridad.*
+
+![Tarea vencida y validación de duplicados](./public/captura-vencidas.png)
+
+*Tarea vencida resaltada en rojo y mensaje de validación al intentar repetir un título.*
+
+## Documento técnico y decisiones de diseño
+
+| Decisión técnica | Justificación |
 |---|---|
-| Node.js | 20.19 o superior (o 22.12+) |
-| npm | Viene con Node |
-| Navegador | Uno actualizado (Chrome, Edge, Firefox, Safari) |
+| Método unificado `TareaController.guardar` | Centraliza el flujo de alta y edición, incluida la validación de títulos duplicados. |
+| Método `Tarea.editar` | Devuelve una copia nueva con los datos actualizados para conservar la inmutabilidad del modelo. |
+| Uso de `.map()` al editar | Reemplaza solo la tarea modificada dentro de un arreglo nuevo, sin alterar el estado anterior. |
+| Normalización del título | `trim()` y `toLocaleLowerCase()` permiten detectar duplicados aunque cambien espacios o mayúsculas. |
+| Filtros encadenados en `obtenerVisibles` | La búsqueda, categoría, prioridad y estado se evalúan juntas para respetar todos los criterios seleccionados. |
+| Clase `.vencida` | Fuerza la variable de prioridad al color rojo y agrega una alerta visible cuando una tarea pendiente está atrasada. |
+| Type guard `esTareaDTO` | Verifica los datos recuperados desde `localStorage` antes de convertirlos en tareas del modelo. |
+| Delegación de eventos | Los botones `Editar` y `Eliminar` usan un listener en la lista para evitar registrar listeners individuales en cada renderizado. |
 
-El proyecto no tiene dependencias de ejecución. Todo lo que se instala es de desarrollo:
+## Arquitectura MVC
 
-| Paquete | Para qué sirve |
+| Pieza | Responsabilidad |
 |---|---|
-| `vite` | Servidor de desarrollo y empaquetado |
-| `typescript` | Compilador y revisión de tipos |
+| `Tarea` | Define la entidad, sus reglas de inmutabilidad y las conversiones DTO. |
+| `TareaView` | Lee los eventos del DOM, muestra el formulario y renderiza las tareas. |
+| `TareaController` | Coordina las reglas de negocio, edición, filtros, ordenamiento y persistencia. |
+| `StorageService<T>` | Guarda y recupera listas genéricas desde `localStorage`. |
+| `main.ts` | Ensambla las dependencias de la aplicación. |
 
-Las versiones exactas están en `package.json`; las fija la plantilla `vanilla-ts` de Vite.
+El flujo general es: la vista detecta una acción del usuario, llama al controlador mediante un callback, el controlador actualiza el estado, el servicio persiste los datos y la vista vuelve a renderizar la información resultante.
 
-## Instalación y ejecución
+## Requisitos e instalación
 
-Para quien clona el repositorio:
+| Requisito | Detalle |
+|---|---|
+| Node.js | 20.19 o superior, o 22.12 o superior |
+| npm | Incluido con Node.js |
+| Navegador | Chrome, Edge, Firefox o Safari actualizado |
 
-```bash
+```powershell
 git clone <url-del-repositorio>
 cd LAB2_poe
 npm install
 npm run dev
 ```
 
-Abre la dirección que muestre la terminal, normalmente `http://localhost:5173`.
-
-| Comando | Qué hace |
-|---|---|
-| `npm run dev` | Servidor de desarrollo con recarga automática |
-| `npm run build` | Revisa los tipos con `tsc` y genera la carpeta `dist/` |
-| `npm run preview` | Sirve el resultado de `build` para probarlo |
-
-## Cómo se creó el proyecto, paso a paso
-
-Comandos en PowerShell (Windows Terminal). En bash cambian `Remove-Item` por `rm -r`, y `mkdir` con comas por `mkdir -p` con espacios.
-
-**1. Crear el proyecto con Vite.** El punto instala en la carpeta actual. En el asistente se elige Vanilla y luego TypeScript.
-
-```powershell
-mkdir LAB2_poe
-cd LAB2_poe
-npm create vite@latest .
-npm install
-```
-
-**2. Borrar el contenido de ejemplo** que trae la plantilla.
-
-```powershell
-Remove-Item -Recurse src/assets, src/counter.ts, src/style.css, public/icons.svg
-```
-
-**3. Crear la estructura de carpetas y los archivos vacíos.**
-
-```powershell
-mkdir src/models, src/views, src/controllers, src/services, src/styles
-New-Item -ItemType File src/models/Tarea.ts, src/services/StorageService.ts, src/views/TareaView.ts, src/controllers/TareaController.ts, src/styles/styles.css
-```
-
-**4. Escribir el código**, de lo que no depende de nada a lo que depende de todo:
-
-1. `src/models/Tarea.ts`: la entidad, los tipos y la validación de datos.
-2. `src/services/StorageService.ts`: persistencia genérica.
-3. `src/views/TareaView.ts`: DOM y eventos.
-4. `src/controllers/TareaController.ts`: reglas y flujo.
-5. `src/main.ts`: arma las piezas.
-6. `index.html` y `src/styles/styles.css`: interfaz y estilos.
-
-**5. Comprobar que compila y probar a mano.**
+Para validar la compilación:
 
 ```powershell
 npm run build
-npm run dev
 ```
+
+## Dependencias
+
+No hay dependencias de ejecución ni librerías externas. El proyecto utiliza únicamente:
+
+- `typescript`: revisión de tipos y compilación.
+- `vite`: servidor de desarrollo y empaquetado.
+
+## Plan de pruebas manuales
+
+- [ ] Registrar tareas con diferentes categorías, prioridades y fechas límite.
+- [ ] Intentar registrar un título duplicado variando mayúsculas y comprobar que aparece un error.
+- [ ] Editar una tarea, cambiar sus datos y confirmar que se actualiza sin duplicarse.
+- [ ] Cancelar una edición y verificar que el formulario vuelve al modo `Agregar`.
+- [ ] Escribir texto en el buscador y seleccionar una categoría; ambos filtros deben aplicarse al mismo tiempo.
+- [ ] Ordenar por `Título (A-Z)` y verificar el orden alfabético.
+- [ ] Crear una tarea con fecha anterior a hoy; debe mostrar `⚠️ VENCIDA` y el estilo rojo.
+- [ ] Completar una tarea vencida; debe dejar de mostrarse como vencida.
+- [ ] Marcar y desmarcar una tarea; el contador de pendientes debe actualizarse.
+- [ ] Recargar la página y comprobar que las tareas se conservan mediante `localStorage`.
+- [ ] Verificar en las herramientas del navegador la clave `lab2-poe:tareas:v2`.
 
 ## Estructura del proyecto
 
-```
+```text
 LAB2_poe/
 ├── index.html
 ├── package.json
 ├── tsconfig.json
 ├── README.md
 ├── public/
-│   └── favicon.svg
+│   ├── favicon.svg
+│   ├── captura-principal.png
+│   └── captura-vencidas.png
 └── src/
     ├── main.ts
     ├── models/
@@ -116,68 +120,8 @@ LAB2_poe/
         └── styles.css
 ```
 
-## Arquitectura
-
-| Pieza | Qué hace | Qué no hace |
-|---|---|---|
-| `Tarea` (modelo) | Define la tarea y su estado, y la convierte a y desde JSON | No toca el DOM ni `localStorage` |
-| `TareaView` | Lee lo que hace el usuario y dibuja las tareas | No guarda datos ni decide reglas |
-| `TareaController` | Agrega, completa, elimina, filtra y ordena, y coordina vista y servicio | No crea elementos HTML |
-| `StorageService<T>` | Guarda y lee una lista de cualquier tipo `T` | No sabe qué es una tarea |
-
-Cada acción sigue el mismo camino. El usuario hace algo, la vista lo detecta y llama a un callback, el controlador actualiza la lista, el servicio guarda si hubo cambios, y la vista redibuja con lo que el controlador le pasa. La vista nunca importa al controlador; recibe los callbacks en `enlazar()`. Solo `main.ts` conoce a todas las piezas.
-
-## Decisiones de diseño
-
-| Decisión | Motivo |
-|---|---|
-| `Tarea` inmutable | Cambiar el estado devuelve una copia nueva; nada se modifica por accidente |
-| Type guard `esTareaDTO` | `localStorage` se puede editar a mano; lo que no cumpla la forma esperada se descarta |
-| `StorageService<T>` genérico con clave versionada (`:v1`) | Se reutiliza con otros tipos y permite cambiar el esquema sin mezclar datos viejos |
-| `textContent` en lugar de `innerHTML` | Un título con HTML se muestra como texto y no se ejecuta |
-| `<dialog>` nativo para confirmar | Se estiliza, atrapa el foco y cierra con Esc sin código extra |
-| Un solo listener en la lista | La lista se redibuja seguido; así no se registran listeners por tarea |
-| Constructor con asignación manual | La plantilla de Vite activa `erasableSyntaxOnly`, que no permite `constructor(private x)` |
-
-## Validaciones
-
-- El título es obligatorio y se recorta con `trim()`: un título de puros espacios se rechaza con un mensaje visible.
-- El título tiene un máximo de 120 caracteres (`maxlength`).
-- La prioridad se comprueba contra los valores permitidos antes de crear la tarea.
-- Los datos que se leen de `localStorage` se validan; si el JSON está corrupto, la app arranca vacía en vez de fallar.
-- Eliminar siempre pide confirmación.
-
-## Cumplimiento del enunciado y de la rúbrica
-
-| Requerimiento | Dónde está |
-|---|---|
-| Registrar con título y prioridad | `TareaView.enlazar` (evento `submit`), `TareaController.agregar`, `Tarea.crear` |
-| Ordenar por prioridad o fecha | `TareaController.obtenerVisibles` y `PESO_PRIORIDAD` |
-| Filtrar por prioridad y estado | `TareaController.obtenerVisibles` |
-| Marcar como completada | `TareaController.alternar` y `Tarea.alternarEstado` |
-| Eliminar con confirmación | `TareaView.confirmarEliminacion` y `TareaController.eliminar` |
-| Persistir en `localStorage` | `StorageService` y `TareaController.persistirYRefrescar` |
-
-| Criterio de la rúbrica | Cómo se cubre |
-|---|---|
-| Arquitectura MVC | Cuatro clases en carpetas separadas; la vista y el modelo no se conocen entre sí |
-| Programación TypeScript | Clases (`Tarea`, `TareaView`, `TareaController`, `StorageService<T>`), interfaces (`TareaDTO`, `ManejadoresVista`, `Resumen`), tipos literales (`Prioridad`, `Orden`, `FiltroEstado`), genéricos y type guards |
-| Funcionalidad | Todos los requerimientos de la tabla anterior |
-| Interfaz y validaciones | Colores por prioridad, eventos por delegación, diálogo de confirmación, mensajes de error y tema claro y oscuro |
-| Documentación y defensa | Este README y comentarios en el código que explican el porqué de cada decisión |
-
-## Pruebas manuales
-
-- [ ] Agregar tres tareas con prioridades distintas: salen ordenadas de alta a baja.
-- [ ] Cambiar el orden a "Más recientes": la última agregada sube.
-- [ ] Filtrar por prioridad y por estado, solos y combinados.
-- [ ] Marcar una tarea: se tacha y el contador baja.
-- [ ] Eliminar con Cancelar o Esc: la tarea sigue. Eliminar con confirmación: desaparece.
-- [ ] Recargar la página: todo sigue igual.
-- [ ] Enviar un título de puros espacios: aparece el mensaje de error y no se crea la tarea.
-- [ ] Escribir `<b>hola</b>` como título: se ve el texto literal, sin negrita.
-- [ ] En DevTools, Application, Local Storage: existe la clave `lab2-poe:tareas:v1`.
-
 ## Autor
 
-`<Oscar Fabricio Guevara Aguilar>`, Programación Orientada a Eventos.
+**Oscar Fabricio Guevara Aguilar**
+Estudiante de Ingeniería en Desarrollo de Software.
+Programación Orientada a Eventos.

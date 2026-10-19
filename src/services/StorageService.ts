@@ -6,8 +6,7 @@ export class StorageService<T> {
   private readonly clave: string;
   private readonly validar: (dato: unknown) => dato is T;
 
-  // La clave lleva versión (":v1"). Si algún día cambia la forma de los datos,
-  // se sube a ":v2" y no se mezclan datos viejos con el esquema nuevo.
+  // La clave lleva una versión para no mezclar datos viejos con un esquema nuevo.
   constructor(clave: string, validar: (dato: unknown) => dato is T) {
     this.clave = clave;
     this.validar = validar;
@@ -36,4 +35,3 @@ export class StorageService<T> {
     }
   }
 }
-

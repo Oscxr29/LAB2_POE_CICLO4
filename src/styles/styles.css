@@ -59,6 +59,8 @@ body {
 }
 
 input[type='text'],
+input[type='date'],
+input[type='search'],
 select,
 button {
   font: inherit;
@@ -66,6 +68,8 @@ button {
 }
 
 input[type='text'],
+input[type='date'],
+input[type='search'],
 select {
   padding: 0.6rem 0.75rem;
   background: var(--tarjeta);
@@ -98,7 +102,7 @@ button {
 
 .nueva {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   gap: 0.5rem;
 }
 
@@ -124,6 +128,10 @@ input[aria-invalid='true'] {
     font-size: 0.8rem;
     color: var(--texto-suave);
   }
+
+  .buscador {
+    flex-basis: 100%;
+  }
 }
 
 .lista {
@@ -148,6 +156,16 @@ input[aria-invalid='true'] {
 
   &[data-prioridad='alta'] {
     --color-prioridad: var(--alta);
+  }
+
+  .tarea.vencida {
+    --color-prioridad: var(--alta) !important;
+    background: color-mix(in srgb, var(--alta) 8%, transparent);
+  }
+
+  .tarea.vencida .tarea-titulo {
+    color: var(--alta);
+    font-weight: bold;
   }
   &[data-prioridad='media'] {
     --color-prioridad: var(--media);
@@ -211,6 +229,18 @@ input[aria-invalid='true'] {
     background: color-mix(in srgb, var(--alta) 12%, transparent);
     filter: none;
   }
+
+  .tarea-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .btn-editar {
+    padding: 0.35rem 0.6rem;
+    background: transparent;
+    color: var(--acento);
+  }
 }
 
 .vacio {
@@ -269,6 +299,11 @@ input[aria-invalid='true'] {
 
     input[type='text'] {
       grid-column: 1 / -1;
+    }
+
+    input[type='date'],
+    select:first-of-type {
+      grid-column: span 2;
     }
   }
 }

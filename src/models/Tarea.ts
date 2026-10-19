@@ -2,26 +2,28 @@
 
 export const PRIORIDADES = ['alta', 'media', 'baja'] as const;
 export type Prioridad = (typeof PRIORIDADES)[number];
+export const CATEGORIAS = ['estudio', 'trabajo', 'personal'] as const;
+export type Categoria = (typeof CATEGORIAS)[number];
 
-// Tipos de los filtros y del orden. Viven aquí para que Vista y Controlador
-// los compartan sin importarse entre ellos (así evitamos imports circulares).
 export type FiltroPrioridad = Prioridad | 'todas';
 export type FiltroEstado = 'todas' | 'pendientes' | 'completadas';
-export type Orden = 'prioridad' | 'fecha';
+export type FiltroCategoria = Categoria | 'todas';
+export type Orden = 'prioridad' | 'fecha' | 'titulo';
 
-// Menor número = más urgente. Sirve directo como criterio de sort().
 export const PESO_PRIORIDAD: Record<Prioridad, number> = {
   alta: 0,
   media: 1,
   baja: 2,
 };
 
-// Forma "plana" de una tarea: es lo que realmente se guarda en localStorage.
-// JSON no tiene tipo Date, por eso la fecha viaja como texto ISO 8601.
+// El DTO conserva la fecha límite como YYYY-MM-DD para que el calendario no
+// cambie de día al convertirlo entre distintas zonas horarias.
 export interface TareaDTO {
   id: string;
   titulo: string;
   prioridad: Prioridad;
+  categoria: Categoria;
+  fechaLimite: string;
   completada: boolean;
   fecha: string;
 }
@@ -30,8 +32,10 @@ export function esPrioridad(valor: unknown): valor is Prioridad {
   return typeof valor === 'string' && (PRIORIDADES as readonly string[]).includes(valor);
 }
 
-// Type guard: localStorage lo puede editar cualquiera desde las DevTools,
-// así que no confiamos en lo que lea JSON.parse sin revisarlo.
+export function esCategoria(valor: unknown): valor is Categoria {
+  return typeof valor === 'string' && (CATEGORIAS as readonly string[]).includes(valor);
+}
+
 export function esTareaDTO(valor: unknown): valor is TareaDTO {
   if (typeof valor !== 'object' || valor === null) return false;
   const v = valor as Record<string, unknown>;
@@ -39,27 +43,33 @@ export function esTareaDTO(valor: unknown): valor is TareaDTO {
     typeof v.id === 'string' &&
     typeof v.titulo === 'string' &&
     esPrioridad(v.prioridad) &&
+    esCategoria(v.categoria) &&
+    typeof v.fechaLimite === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(v.fechaLimite) &&
+    !Number.isNaN(Date.parse(`${v.fechaLimite}T00:00:00`)) &&
     typeof v.completada === 'boolean' &&
     typeof v.fecha === 'string' &&
     !Number.isNaN(Date.parse(v.fecha))
   );
 }
 
-interface DatosTarea {
+export interface DatosTarea {
   id: string;
   titulo: string;
   prioridad: Prioridad;
+  categoria: Categoria;
+  fechaLimite: string;
   completada: boolean;
   fecha: Date;
 }
 
 // Tarea es inmutable: para "cambiar" algo se crea una copia nueva.
-// Cuesta un objeto más, pero evita que otra parte del código la modifique
-// por accidente y hace el estado mucho más fácil de seguir al depurar.
 export class Tarea {
   readonly id: string;
   readonly titulo: string;
   readonly prioridad: Prioridad;
+  readonly categoria: Categoria;
+  readonly fechaLimite: string;
   readonly completada: boolean;
   readonly fecha: Date;
 
@@ -67,15 +77,19 @@ export class Tarea {
     this.id = datos.id;
     this.titulo = datos.titulo;
     this.prioridad = datos.prioridad;
+    this.categoria = datos.categoria;
+    this.fechaLimite = datos.fechaLimite;
     this.completada = datos.completada;
     this.fecha = datos.fecha;
   }
 
-  static crear(titulo: string, prioridad: Prioridad): Tarea {
+  static crear(titulo: string, prioridad: Prioridad, categoria: Categoria, fechaLimite: string): Tarea {
     return new Tarea({
       id: crypto.randomUUID(),
       titulo: titulo.trim(),
       prioridad,
+      categoria,
+      fechaLimite,
       completada: false,
       fecha: new Date(),
     });
@@ -83,6 +97,11 @@ export class Tarea {
 
   static desdeDTO(dto: TareaDTO): Tarea {
     return new Tarea({ ...dto, fecha: new Date(dto.fecha) });
+  }
+
+  // Devuelve una copia con los cambios para conservar el estado original intacto.
+  editar(titulo: string, prioridad: Prioridad, categoria: Categoria, fechaLimite: string): Tarea {
+    return new Tarea({ ...this.aDatos(), titulo: titulo.trim(), prioridad, categoria, fechaLimite });
   }
 
   alternarEstado(): Tarea {
@@ -98,6 +117,8 @@ export class Tarea {
       id: this.id,
       titulo: this.titulo,
       prioridad: this.prioridad,
+      categoria: this.categoria,
+      fechaLimite: this.fechaLimite,
       completada: this.completada,
       fecha: this.fecha,
     };
